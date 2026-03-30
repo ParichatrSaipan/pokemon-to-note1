@@ -6,6 +6,7 @@ const path = require('path')
 
 // Initialize Express app
 const app = express()
+//อ่านไฟล์ .env เพื่อรับค่าต่างๆ เช่น PORT, SECRET_TOKEN, และการตั้งค่า PocketHost
 const PORT = process.env.PORT || 3000
 const SECRET_TOKEN = process.env.SECRET_TOKEN
 const DB_FILE = path.join(__dirname, 'notes.json')
@@ -22,20 +23,20 @@ app.use(express.json())
 
 // ============ Local JSON Storage Functions ============
 
-// Load notes from local notes.json file
+// โหลดโน้ตจากไฟล์ notes.json ถ้าไฟล์ไม่มีจะคืนค่าเป็นอาร์เรย์ว่าง
 function loadNotes() {
   if (!fs.existsSync(DB_FILE)) return []
   return JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'))
 }
 
-// Save notes to local notes.json file
+// บันทึกโน้ตลงในไฟล์ notes.json โดยการเขียนอาร์เรย์ของโน้ตเป็น JSON
 function saveNotes(notes) {
   fs.writeFileSync(DB_FILE, JSON.stringify(notes, null, 2))
 }
 
 // ============ Authentication Middleware ============
 
-// Check if Authorization header matches SECRET_TOKEN
+//ตรวจสอบว่าใน header ของคำขอมีค่า 'authorization' ที่ตรงกับ SECRET_TOKEN หรือไม่ ถ้าไม่ตรงจะส่งกลับสถานะ 401 Unauthorized
 function requireAuth(req, res, next) {
   if (req.headers['authorization'] !== SECRET_TOKEN) {
     return res.status(401).json({ error: 'Unauthorized' })
@@ -45,7 +46,7 @@ function requireAuth(req, res, next) {
 
 // ============ API Routes ============
 
-// GET /api/notes - Get all notes
+//get เรียกข้อความทั้งหมดของโน้ตจาก PocketHost หรือจากไฟล์ JSON ขึ้นอยู่กับการตั้งค่า
 app.get('/api/notes', async (_req, res) => {
   try {
     let notes
@@ -67,7 +68,7 @@ app.get('/api/notes', async (_req, res) => {
   }
 })
 
-// POST /api/notes - Create a new note (requires auth)
+//post /api/notes - สร้างโน้ตใหม่ โดยรับข้อมูล title และ content จาก body ของคำขอ และบันทึกโน้ตลงใน PocketHost หรือไฟล์ JSON ขึ้นอยู่กับการตั้งค่า
 app.post('/api/notes', requireAuth, async (req, res) => {
   const { title, content } = req.body
 
@@ -128,7 +129,7 @@ app.delete('/api/notes/:id', requireAuth, async (req, res) => {
         return res.status(404).json({ error: 'Note not found' })
       }
     } else {
-      // Delete from local storage
+      // Delete from local storage ตรงกับการค้นหาโน้ตที่มี id ตรงกับพารามิเตอร์ id ที่ส่งมา ถ้าไม่พบจะส่งกลับสถานะ 404 Not Found ถ้าพบจะลบโน้ตออกจากอาร์เรย์และบันทึกอาร์เรย์ใหม่ลงในไฟล์ JSON
       const notes = loadNotes()
       const noteIndex = notes.findIndex((note) => note.id === parseInt(id))
 
@@ -147,7 +148,7 @@ app.delete('/api/notes/:id', requireAuth, async (req, res) => {
 })
 
 // ============ Start Server ============
-
+//เริ่มต้นเซิร์ฟเวอร์และแสดงข้อความในคอนโซลว่าเซิร์ฟเวอร์กำลังทำงานอยู่ที่ URL ไหน และใช้การเก็บข้อมูลแบบไหน (PocketHost หรือ JSON file)
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`)
   console.log(`Storage: ${POCKETHOST_ENDPOINT ? `PocketHost (${POCKETHOST_URL})` : `JSON file (${DB_FILE})`}`)

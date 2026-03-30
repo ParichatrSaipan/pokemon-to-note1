@@ -2,22 +2,34 @@
 
 @layer components {
   .card {
-    @apply bg-white rounded-lg border border-gray-200 p-5;
+    @apply bg-gray-900 rounded-xl border border-gray-700 p-5 text-white;
   }
 
   .input {
-    @apply w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500;
+    @apply w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
   }
 
   .btn-primary {
-    @apply w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-2 rounded-md text-sm transition-colors flex items-center justify-center gap-2;
+    @apply w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-3 rounded-lg text-sm transition-colors flex items-center justify-center gap-2;
   }
 
   .btn-danger {
-    @apply text-red-500 hover:text-red-700 text-sm shrink-0;
+    @apply text-red-400 hover:text-red-300 text-sm shrink-0;
   }
 
   .note-item {
-    @apply bg-white rounded-lg border border-gray-200 p-4 flex justify-between items-start gap-4 cursor-pointer hover:border-blue-300 hover:shadow-sm transition-all;
+    @apply rounded-xl p-4 flex justify-between items-start gap-4 cursor-pointer transition-all;
+  }
+
+  .pokemon-btn {
+    @apply relative rounded-xl overflow-hidden cursor-pointer transition-transform hover:scale-105;
+  }
+
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50;
+  }
+
+  .modal-content {
+    @apply bg-gray-900 rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-700;
   }
 }
