@@ -44,8 +44,8 @@ function requireAuth(req, res, next) {
   next()
 }
 
-// Runtime storage mode (can be toggled without restart)
-let useLocal = !POCKETHOST_ENDPOINT
+// Runtime storage mode (can be toggled without restart) — default to local
+let useLocal = true
 
 // ============ API Routes ============
 

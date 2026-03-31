@@ -49,6 +49,7 @@ export function useNotes() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [storageMode, setStorageMode] = useState(null)
+  const [connected, setConnected] = useState(false)
 
   const fetchNotes = useCallback(async () => {
     setFetching(true)
@@ -56,8 +57,9 @@ export function useNotes() {
 
     try {
       const [data, status] = await Promise.all([getNotes(), getStatus()])
+      setConnected(true)
       setStorageMode(status.storage)
-      console.log(`[STORAGE] Using: ${status.storage === 'pockethost' ? 'Cloud (PocketHost)' : 'Local Data'}`)
+      console.log(`[STORAGE] Using: ${status.storage === 'pockethost' ? 'Public (PocketHost)' : 'Personal'}`)
       const normalizedNotes = data
         .map((note) => ({ ...note, id: String(note.id) }))
         .sort((a, b) => Number(b.id) - Number(a.id))
@@ -65,7 +67,10 @@ export function useNotes() {
       setNotes(notesWithPokemon)
     } catch (err) {
       const isNetworkError = err.message === 'Failed to fetch' || err.message === 'Load failed' || err.message === 'NetworkError when attempting to fetch resource.'
-      setError({ message: isNetworkError ? 'Cannot connect to backend (is it running?)' : err.message, id: Date.now() })
+      setConnected(!isNetworkError)
+      if (!isNetworkError) {
+        setError({ message: err.message, id: Date.now() })
+      }
     } finally {
       setFetching(false)
     }
@@ -109,5 +114,5 @@ export function useNotes() {
     fetchNotes()
   }, [fetchNotes])
 
-  return { notes, fetching, saving, error, storageMode, addNote, removeNote, fetchNotes }
+  return { notes, fetching, saving, error, storageMode, connected, addNote, removeNote, fetchNotes }
 }

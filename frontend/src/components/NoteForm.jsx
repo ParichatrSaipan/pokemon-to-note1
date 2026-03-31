@@ -84,7 +84,7 @@ export default function NoteForm({ saving, onAdd, onClose, storageMode }) {
                   : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
               }`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${storageMode === 'pockethost' ? 'bg-green-400' : 'bg-yellow-400'}`} />
-                {storageMode === 'pockethost' ? 'Cloud (PocketHost)' : 'Local Data'}
+                {storageMode === 'pockethost' ? 'Public (PocketHost)' : 'Personal'}
               </span>
             )}
           </div>

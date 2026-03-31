@@ -36,7 +36,7 @@ function ErrorModal({ message, onClose }) {
 }
 
 export default function NotesPage() {
-  const { notes, fetching, saving, error, storageMode, addNote, removeNote, fetchNotes } = useNotes()
+  const { notes, fetching, saving, error, storageMode, connected, addNote, removeNote, fetchNotes } = useNotes()
   const [selectedNote, setSelectedNote] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [showError, setShowError] = useState(false)
@@ -84,14 +84,19 @@ export default function NotesPage() {
               }`}
             >
               <span className={`w-1.5 h-1.5 rounded-full ${storageMode === 'pockethost' ? 'bg-green-400' : 'bg-yellow-400'}`} />
-              {storageMode === 'pockethost' ? 'Cloud (PocketHost)' : 'Local Data'}
+              {storageMode === 'pockethost' ? 'Public (PocketHost)' : 'Personal'}
             </button>
           )}
         </div>
         <button
           onClick={() => setShowForm(true)}
+          disabled={!connected}
           aria-label="Add note"
-          className="shrink-0 mt-2 w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-600 text-gray-400 hover:border-white hover:text-white hover:bg-white/5 transition-all duration-200 flex items-center justify-center text-3xl"
+          className={`shrink-0 mt-2 w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 transition-all duration-200 flex items-center justify-center text-3xl ${
+            connected
+              ? 'border-gray-600 text-gray-400 hover:border-white hover:text-white hover:bg-white/5'
+              : 'border-gray-800 text-gray-700 cursor-not-allowed opacity-40'
+          }`}
         >
           +
         </button>
@@ -103,6 +108,7 @@ export default function NotesPage() {
         <NoteList
           notes={notes}
           fetching={fetching}
+          connected={connected}
           selectedId={selectedNote?.id}
           onSelect={(note) => setSelectedNote(selectedNote?.id === note.id ? null : note)}
           onDelete={handleDelete}

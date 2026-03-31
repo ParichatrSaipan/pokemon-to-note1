@@ -19,13 +19,37 @@ function LoadingState() {
 }
 
 
-function EmptyState() {
-  return <p className="text-center text-sm text-gray-400 py-12">No notes yet. Click + to create one!</p>
+function EmptyState({ connected }) {
+  const pokemon = useMemo(() => POKEMON[Math.floor(Math.random() * POKEMON.length)], [])
+
+  if (!connected) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-6">
+        <div className="relative w-32 h-32 rounded-2xl flex items-center justify-center overflow-hidden" style={{ backgroundColor: pokemon.color + '33' }}>
+          {pokemon.cardAssets?.logo && (
+            <img src={pokemon.cardAssets.logo} alt="" className="absolute w-24 h-24 object-contain opacity-20" />
+          )}
+          <img src={pokemon.cardAssets.pokemon} alt={pokemon.name} className="relative z-10 w-20 h-20 object-contain opacity-50" />
+        </div>
+        <div className="text-center space-y-1">
+          <p className="text-red-400 font-semibold text-sm">Backend not connected</p>
+          <p className="text-gray-600 text-xs">Start the backend server to load your notes</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center py-24 gap-4">
+      <img src={pokemon.cardAssets.pokemon} alt={pokemon.name} className="w-24 h-24 object-contain opacity-30" />
+      <p className="text-gray-500 text-sm">No notes yet. Click + to create one!</p>
+    </div>
+  )
 }
 
-export default function NoteList({ notes, fetching, onSelect, onDelete, selectedId }) {
+export default function NoteList({ notes, fetching, connected, onSelect, onDelete, selectedId }) {
   if (fetching) return <LoadingState />
-  if (notes.length === 0) return <EmptyState />
+  if (notes.length === 0) return <EmptyState connected={connected} />
 
   const pokeballs = Array.from({ length: 5 }, (_, i) => ({
     id: i,
