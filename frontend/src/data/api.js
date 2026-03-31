@@ -1,58 +1,101 @@
-// API Configuration
-// Local development:
 const API_BASE = 'http://localhost:3000'
-
-// Production: Railway backend (commented out):
-// const API_BASE = 'https://secure-note-app-api.up.railway.app'
-
 const TOKEN = 'mysecrettoken'
 const NOTES_URL = `${API_BASE}/api/notes`
 
-// Fetch all notes from backend
+const DEFAULT_HEADERS = {
+  'Content-Type': 'application/json',
+}
+
+const AUTH_HEADERS = {
+  ...DEFAULT_HEADERS,
+  Authorization: TOKEN,
+}
+
+function handleApiError(response) {
+  if (response.status === 401) {
+    console.error(`[ERROR] 401 Unauthorized — invalid token`)
+    throw new Error('401 Unauthorized: Invalid token')
+  }
+  if (response.status === 404) {
+    console.error(`[ERROR] 404 Not Found`)
+    throw new Error('404 Not Found')
+  }
+  if (!response.ok) {
+    console.error(`[ERROR] ${response.status} — unexpected error`)
+    throw new Error(`${response.status} Error`)
+  }
+}
+
 export async function getNotes() {
-  console.log('GET /api/notes')
-  const response = await fetch(NOTES_URL)
-
-  if (!response.ok) throw new Error('Failed to fetch notes')
-
-  const notes = await response.json()
-  console.log('Notes fetched:', notes)
-  return notes
+  try {
+    const response = await fetch(NOTES_URL)
+    handleApiError(response)
+    const data = await response.json()
+    console.log(`[GET] 200 OK — fetched ${data.length} notes`)
+    return data
+  } catch (error) {
+    throw new Error(error.message || 'Failed to fetch notes')
+  }
 }
 
-// Create a new note on backend
 export async function createNote({ title, content }) {
-  console.log('POST /api/notes', { title, content })
+  if (!title?.trim() || !content?.trim()) {
+    throw new Error('Title and content are required')
+  }
 
-  const response = await fetch(NOTES_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: TOKEN,
-    },
-    body: JSON.stringify({ title, content }),
-  })
+  try {
+    const response = await fetch(NOTES_URL, {
+      method: 'POST',
+      headers: AUTH_HEADERS,
+      body: JSON.stringify({ title, content }),
+    })
 
-  if (response.status === 401) throw new Error('Unauthorized')
-  if (!response.ok) throw new Error('Failed to create note')
-
-  const newNote = await response.json()
-  console.log('Note created:', newNote)
-  return newNote
+    handleApiError(response)
+    const data = await response.json()
+    console.log(`[POST] 201 Created — id: ${data.id}, title: "${data.title}"`)
+    return data
+  } catch (error) {
+    throw new Error(error.message || 'Failed to create note')
+  }
 }
 
-// Delete a note from backend
+export async function toggleStorage() {
+  try {
+    const response = await fetch(`${API_BASE}/api/status/toggle`, {
+      method: 'POST',
+      headers: AUTH_HEADERS,
+    })
+    const data = await response.json()
+    console.log(`[TOGGLE] Storage switched to: ${data.storage}`)
+    return data
+  } catch {
+    return { storage: 'unknown' }
+  }
+}
+
+export async function getStatus() {
+  try {
+    const response = await fetch(`${API_BASE}/api/status`)
+    return await response.json()
+  } catch {
+    return { storage: 'unknown' }
+  }
+}
+
 export async function deleteNote(id) {
-  console.log('DELETE /api/notes/' + id)
+  if (!id) {
+    throw new Error('Note ID is required')
+  }
 
-  const response = await fetch(`${NOTES_URL}/${id}`, {
-    method: 'DELETE',
-    headers: { Authorization: TOKEN },
-  })
+  try {
+    const response = await fetch(`${NOTES_URL}/${id}`, {
+      method: 'DELETE',
+      headers: AUTH_HEADERS,
+    })
 
-  if (response.status === 401) throw new Error('Unauthorized')
-  if (response.status === 404) throw new Error('Note not found')
-  if (!response.ok) throw new Error('Failed to delete note')
-
-  console.log('Note deleted:', id)
+    handleApiError(response)
+    console.log(`[DELETE] 200 OK — note id: ${id} deleted`)
+  } catch (error) {
+    throw new Error(error.message || 'Failed to delete note')
+  }
 }

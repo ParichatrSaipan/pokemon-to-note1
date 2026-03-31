@@ -1,106 +1,113 @@
-import { useState, useEffect } from 'react'
-import { getNotes, createNote, deleteNote } from './api'
+import { useState, useEffect, useCallback } from 'react'
+import { getNotes, createNote, deleteNote, getStatus } from './api'
+import { POKEMON } from './pokemon'
 
-// Helper to get Pokemon map from localStorage
-function getPokemonMap() {
-  try {
-    return JSON.parse(localStorage.getItem('pokemonMap') || '{}')
-  } catch {
-    return {}
-  }
+const POKEMON_MAP_KEY = 'pokemonMap'
+
+const pokemonStorage = {
+  getMap() {
+    try {
+      return JSON.parse(localStorage.getItem(POKEMON_MAP_KEY) || '{}')
+    } catch {
+      return {}
+    }
+  },
+
+  saveMap(map) {
+    localStorage.setItem(POKEMON_MAP_KEY, JSON.stringify(map))
+  },
+
+  setPokemon(noteId, pokemon) {
+    const map = this.getMap()
+    map[String(noteId)] = pokemon
+    this.saveMap(map)
+  },
+
+  removePokemon(noteId) {
+    const map = this.getMap()
+    delete map[String(noteId)]
+    this.saveMap(map)
+  },
+
+  mergePokemon(notes) {
+    const map = this.getMap()
+    return notes.map((note) => {
+      const key = String(note.id)
+      if (!map[key]) {
+        const random = POKEMON[Math.floor(Math.random() * POKEMON.length)]
+        map[key] = random
+        this.saveMap(map)
+      }
+      return { ...note, pokemon: map[key] }
+    })
+  },
 }
 
-// Helper to save Pokemon map to localStorage
-function savePokemonMap(map) {
-  localStorage.setItem('pokemonMap', JSON.stringify(map))
-}
-
-// Custom hook to manage notes state and API calls
 export function useNotes() {
-  // State management
   const [notes, setNotes] = useState([])
-  const [fetching, setFetching] = useState(false)  // Loading when fetching initial notes
-  const [saving, setSaving] = useState(false)      // Loading when creating/deleting
-  const [error, setError] = useState(null)         // Error messages
+  const [fetching, setFetching] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+  const [storageMode, setStorageMode] = useState(null)
 
-  // Merge notes with their Pokemon data from localStorage
-  function mergeWithPokemon(notesData) {
-    const pokemonMap = getPokemonMap()
-    return notesData.map((note) => ({
-      ...note,
-      pokemon: pokemonMap[String(note.id)] || null,
-    }))
-  }
-
-  // Load all notes from backend
-  async function fetchNotes() {
+  const fetchNotes = useCallback(async () => {
     setFetching(true)
     setError(null)
 
     try {
-      const data = await getNotes()
-      // Convert IDs to strings for consistency and merge with Pokemon
-      const notesWithPokemon = mergeWithPokemon(data.map((note) => ({
-        ...note,
-        id: String(note.id),
-      })))
+      const [data, status] = await Promise.all([getNotes(), getStatus()])
+      setStorageMode(status.storage)
+      console.log(`[STORAGE] Using: ${status.storage === 'pockethost' ? 'Cloud (PocketHost)' : 'Local Data'}`)
+      const normalizedNotes = data
+        .map((note) => ({ ...note, id: String(note.id) }))
+        .sort((a, b) => Number(b.id) - Number(a.id))
+      const notesWithPokemon = pokemonStorage.mergePokemon(normalizedNotes)
       setNotes(notesWithPokemon)
     } catch (err) {
-      setError('Failed to load notes. Is the backend running?')
+      const isNetworkError = err.message === 'Failed to fetch' || err.message === 'Load failed' || err.message === 'NetworkError when attempting to fetch resource.'
+      setError({ message: isNetworkError ? 'Cannot connect to backend (is it running?)' : err.message, id: Date.now() })
     } finally {
       setFetching(false)
     }
-  }
+  }, [])
 
-  // Add a new note
-  async function addNote({ title, content, pokemon }) {
+  const addNote = useCallback(async ({ title, content }) => {
     setSaving(true)
-    setError(null)
 
     try {
       const newNote = await createNote({ title, content })
-      const noteWithId = { ...newNote, id: String(newNote.id), pokemon: pokemon || null }
-
-      // Save Pokemon mapping to localStorage
-      if (pokemon) {
-        const pokemonMap = getPokemonMap()
-        pokemonMap[String(newNote.id)] = pokemon
-        savePokemonMap(pokemonMap)
+      const randomPokemon = POKEMON[Math.floor(Math.random() * POKEMON.length)]
+      const noteWithId = {
+        ...newNote,
+        id: String(newNote.id),
+        pokemon: randomPokemon,
       }
 
-      // Add the new note to state
-      setNotes((prev) => [...prev, noteWithId])
+      pokemonStorage.setPokemon(newNote.id, randomPokemon)
+      setNotes((prev) => [noteWithId, ...prev])
+      return randomPokemon
     } catch (err) {
-      setError(err.message)
+      setError({ message: err.message, id: Date.now() })
       throw err
     } finally {
       setSaving(false)
     }
-  }
-
-  // Delete a note
-  async function removeNote(id) {
-    setError(null)
-
-    try {
-      await deleteNote(id)
-      // Remove the note from state
-      setNotes((prev) => prev.filter((note) => note.id !== id))
-
-      // Clean up Pokemon mapping
-      const pokemonMap = getPokemonMap()
-      delete pokemonMap[String(id)]
-      savePokemonMap(pokemonMap)
-    } catch (err) {
-      setError(err.message)
-      throw err
-    }
-  }
-
-  // Load notes when component mounts
-  useEffect(() => {
-    fetchNotes()
   }, [])
 
-  return { notes, fetching, saving, error, addNote, removeNote }
+  const removeNote = useCallback(async (id) => {
+    try {
+      await deleteNote(id)
+      setNotes((prev) => prev.filter((note) => note.id !== id))
+      pokemonStorage.removePokemon(id)
+    } catch (err) {
+      setError({ message: err.message, id: Date.now() })
+      throw err
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchNotes()
+  }, [fetchNotes])
+
+  return { notes, fetching, saving, error, storageMode, addNote, removeNote, fetchNotes }
 }

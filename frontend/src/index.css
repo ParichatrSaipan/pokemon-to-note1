@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+
 @layer components {
   .card {
     @apply bg-gray-900 rounded-xl border border-gray-700 p-5 text-white;

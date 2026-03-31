@@ -44,24 +44,49 @@ function requireAuth(req, res, next) {
   next()
 }
 
+// Runtime storage mode (can be toggled without restart)
+let useLocal = !POCKETHOST_ENDPOINT
+
 // ============ API Routes ============
+
+app.get('/api/status', (_req, res) => {
+  res.json({
+    storage: useLocal ? 'local' : 'pockethost',
+    url: useLocal ? null : POCKETHOST_URL,
+  })
+})
+
+app.post('/api/status/toggle', requireAuth, (_req, res) => {
+  if (!POCKETHOST_ENDPOINT) {
+    return res.status(400).json({ error: 'PocketHost not configured' })
+  }
+  useLocal = !useLocal
+  console.log(`[STORAGE] Switched to: ${useLocal ? 'Local JSON' : 'PocketHost'}`)
+  res.json({ storage: useLocal ? 'local' : 'pockethost' })
+})
 
 //get เรียกข้อความทั้งหมดของโน้ตจาก PocketHost หรือจากไฟล์ JSON ขึ้นอยู่กับการตั้งค่า
 app.get('/api/notes', async (_req, res) => {
+  console.log('[GET] Fetching all notes...')
   try {
     let notes
 
-    // Use PocketHost if configured, otherwise use local JSON
-    if (POCKETHOST_ENDPOINT) {
-      const response = await fetch(POCKETHOST_ENDPOINT, {
+    // Use PocketHost if configured and useLocal is false, otherwise use local JSON
+    if (!useLocal) {
+      const response = await fetch(`${POCKETHOST_ENDPOINT}?perPage=500&sort=-created`, {
         headers: { Authorization: `Bearer ${POCKETHOST_TOKEN}` },
       })
       const data = await response.json()
+      if (!response.ok || !data.items) {
+        console.error('PocketHost error:', data)
+        return res.status(500).json({ error: 'PocketHost fetch failed', detail: data })
+      }
       notes = data.items.map(({ id, title, content }) => ({ id, title, content }))
     } else {
       notes = loadNotes()
     }
 
+    console.log(`[GET] Returning ${notes.length} notes`)
     res.json(notes)
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch notes' })
@@ -76,7 +101,7 @@ app.post('/api/notes', requireAuth, async (req, res) => {
     let newNote
 
     // Create note in PocketHost or local storage
-    if (POCKETHOST_ENDPOINT) {
+    if (!useLocal) {
       const response = await fetch(POCKETHOST_ENDPOINT, {
         method: 'POST',
         headers: {
@@ -107,6 +132,7 @@ app.post('/api/notes', requireAuth, async (req, res) => {
       saveNotes(notes)
     }
 
+    console.log(`[CREATE] Note created — id: ${newNote.id}, title: "${newNote.title}"`)
     res.status(201).json(newNote)
   } catch (error) {
     res.status(500).json({ error: 'Failed to create note' })
@@ -119,7 +145,7 @@ app.delete('/api/notes/:id', requireAuth, async (req, res) => {
 
   try {
     // Delete from PocketHost or local storage
-    if (POCKETHOST_ENDPOINT) {
+    if (!useLocal) {
       const response = await fetch(`${POCKETHOST_ENDPOINT}/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${POCKETHOST_TOKEN}` },
@@ -141,6 +167,7 @@ app.delete('/api/notes/:id', requireAuth, async (req, res) => {
       saveNotes(notes)
     }
 
+    console.log(`[DELETE] Note deleted — id: ${id}`)
     res.json({ message: 'Note deleted' })
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete note' })
