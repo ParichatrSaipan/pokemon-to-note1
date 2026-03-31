@@ -33,7 +33,9 @@ const pokemonStorage = {
     const map = this.getMap()
     return notes.map((note) => {
       const key = String(note.id)
-      if (!map[key]) {
+      const cached = map[key]
+      const isValid = cached && POKEMON.some((p) => p.id === cached.id && p.name === cached.name)
+      if (!isValid) {
         const random = POKEMON[Math.floor(Math.random() * POKEMON.length)]
         map[key] = random
         this.saveMap(map)
@@ -115,5 +117,10 @@ export function useNotes() {
     fetchNotes()
   }, [fetchNotes])
 
-  return { notes, fetching, saving, error, storageMode, connected, addNote, removeNote, fetchNotes }
+  const clearCache = useCallback(async () => {
+    localStorage.removeItem(POKEMON_MAP_KEY)
+    await fetchNotes()
+  }, [fetchNotes])
+
+  return { notes, fetching, saving, error, storageMode, connected, addNote, removeNote, fetchNotes, clearCache }
 }
