@@ -1,6 +1,6 @@
 # Report — Pokèmon to Note
 
-**Parichatr Tiangsombun — 66010464**
+Name & Student ID: **Parichatr Tiangsombun — 66010464**
 
 ## 1. Where JavaScript Executes: Browser vs Node.js
 
