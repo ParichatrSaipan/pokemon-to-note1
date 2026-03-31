@@ -1,6 +1,6 @@
 # Pokèmon to Note
 
-Name & Student ID: **Parichatr Tiangsombun — 66010464**
+**Name & Student ID: Parichatr Tiangsombun — 66010464**
 
 A full-stack note-taking app with a Pokèmon theme. Each note is assigned a random Pokèmon. Supports local JSON storage or cloud storage via PocketHost — switchable at runtime without restarting the server.
 
