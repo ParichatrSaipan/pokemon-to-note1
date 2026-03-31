@@ -1,5 +1,7 @@
 # Pokèmon to Note
 
+**Parichatr Tiangsombun — 66010464**
+
 A full-stack note-taking app with a Pokèmon theme. Each note is assigned a random Pokèmon. Supports local JSON storage or cloud storage via PocketHost — switchable at runtime without restarting the server.
 
 ![Demo](./images/demo.gif)

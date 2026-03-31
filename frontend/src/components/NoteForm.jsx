@@ -22,11 +22,9 @@ export default function NoteForm({ saving, onAdd, onClose, storageMode }) {
 
   return (
     <div className="fixed inset-0 z-40 bg-black overflow-hidden">
-      {/* Pokeball Background */}
       <img src={PokeBallImg} alt="" className="fixed -top-10 -right-16 w-48 h-48 sm:-top-20 sm:-right-32 sm:w-96 sm:h-96 opacity-30 pointer-events-none z-1 mix-blend-screen" />
       <img src={PokeBallImg} alt="" className="fixed -bottom-10 -left-16 w-40 h-40 sm:bottom-0 sm:-left-40 sm:w-80 sm:h-80 opacity-30 pointer-events-none z-1 mix-blend-screen" />
 
-      {/* Pokemon Reveal Popup */}
       {revealedPokemon && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
           <div className="rounded-3xl border border-white/20 bg-zinc-900/95 backdrop-blur-xl p-8 text-center shadow-2xl w-full max-w-xs">
@@ -54,16 +52,13 @@ export default function NoteForm({ saving, onAdd, onClose, storageMode }) {
         </div>
       )}
 
-      {/* Dragon Image */}
       <img
         src={DragonImg}
         alt=""
-        className="pointer-events-none fixed right-0 bottom-0 w-52 sm:w-80 md:w-[480px] z-1 opacity-90"
+        className="pointer-events-none fixed right-0 bottom-0 w-52 sm:w-80 md:w-120 z-1 opacity-90"
       />
 
       <div className="relative h-screen flex flex-col px-4 pt-6 pb-6 sm:px-10 sm:pt-10 z-10 max-w-5xl mx-auto">
-
-        {/* Top nav */}
         <div className="flex items-center justify-between mb-8 sm:mb-10 shrink-0">
           <button
             onClick={onClose}
@@ -127,7 +122,6 @@ export default function NoteForm({ saving, onAdd, onClose, storageMode }) {
           </div>
         </div>
 
-        {/* Form fields */}
         <div className="flex-1 overflow-y-auto">
           <div className="w-full sm:max-w-xl space-y-5">
             <div className="space-y-2">
@@ -160,7 +154,6 @@ export default function NoteForm({ saving, onAdd, onClose, storageMode }) {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   )

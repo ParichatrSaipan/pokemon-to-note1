@@ -54,6 +54,7 @@ export function useNotes() {
   const fetchNotes = useCallback(async () => {
     setFetching(true)
     setError(null)
+    setStorageMode(null)
 
     try {
       const [data, status] = await Promise.all([getNotes(), getStatus()])
