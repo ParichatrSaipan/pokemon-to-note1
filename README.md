@@ -77,7 +77,25 @@ npm run dev       # starts on http://localhost:5173
 
 ### Configuration
 
-No environment variables needed. The API URL and token are hardcoded in `src/data/api.js` — update them if you change the backend port or `SECRET_TOKEN`.
+The API URL is managed in `src/config/configureAPI.js`. It switches automatically based on the build mode:
+
+| Mode | URL |
+|------|-----|
+| `npm run dev` (development) | `http://localhost:3000` |
+| `npm run build` (production) | `https://pokemon-to-note-api.up.railway.app` |
+
+Update the `production` URL in `configureAPI.js` if you deploy the backend elsewhere.
+
+---
+
+---
+
+## Deployment
+
+| | URL |
+|---|---|
+| Backend (Railway) | https://pokemon-to-note-api.up.railway.app |
+| Frontend (Vercel) | https://pokemon-to-note.vercel.app |
 
 ---
 
